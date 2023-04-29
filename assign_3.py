@@ -2,7 +2,7 @@ import pickle
 import streamlit as st
 
 # Load the saved model from file
-with open('classifier_model2.pkl', 'rb') as f:
+with open('classifier_model.pkl', 'rb') as f:
     loaded_model = pickle.load(f)
 
 
@@ -14,7 +14,7 @@ with open('classifier_model2.pkl', 'rb') as f:
 def prediction(ApplicantIncome, LoanAmount, Credit_History, Loan_Amount_Term, Property_Area,Married,Education):   
  
     # Pre-processing user input 
-    if Credit_History == "Unclear Debts":
+    if Credit_History == "Uncleared Debts":
         Credit_History = 0
     else:
         Credit_History = 1  
@@ -22,11 +22,11 @@ def prediction(ApplicantIncome, LoanAmount, Credit_History, Loan_Amount_Term, Pr
     Loan_Amount_Term = float(Loan_Amount_Term)
     
     if Property_Area == "Urban":
-       Property_Area = 1
+       Property_Area = 3
     elif Property_Area == "Semi Urban":
        Property_Area = 2
     else:
-       Property_Area = 3
+       Property_Area = 1
 
  
     if Married == "Unmarried":
@@ -62,12 +62,30 @@ import altair as alt
 
 # Define the Streamlit app
 def main():  
-  
-    st.set_page_config(layout="wide")
+    
+    chartTitleFontSize = 18;
+    chartAxisNameFontSize = 18;
+    chartAxisValuesFontSize = 14;
+    
+
+    st.set_page_config(
+        page_title="Loan Applications",
+        page_icon=":smiley:",
+        layout="wide",
+    
+       
+    )
+
+
+    
+
+ 
     st.markdown("""
             <style>
-                   .block-container {
-                        padding-top: 0.4rem;
+                    
+                    
+                    .block-container {
+                        padding-top: 0.2rem;
                         padding-bottom: 1rem;
                         padding-left: 1rem;
                         padding-right: 1rem;
@@ -77,33 +95,20 @@ def main():
 
             
 
-    st.sidebar.header("Enter Loan Details")
+    
+
     # Load the loan data
     loan_data = pd.read_csv("processed_loan_data.csv")
     loan_data["Loan_Status"] = ["Awarded" if val == "Y" else "Rejected" for val in loan_data["Loan_Status"]]
+    loan_data["Married"] = ["Married" if val == "Yes" else "Not Married" for val in loan_data["Married"]]
     # Set up the sidebar with the input fields for prediction
    
-    ApplicantIncome = st.sidebar.number_input("Applicant Monthly Income")
-    LoanAmount = st.sidebar.number_input("Total loan amount")
-    Credit_History = st.sidebar.selectbox('Credit_History',("Unclear Debts","No Unclear Debts"))
-    Loan_Amount_Term = st.sidebar.selectbox('Loan Term Days',("360","180","480","300","240","120","90","90","60","30"))
-    Property_Area = st.sidebar.selectbox('Property Area',("Urban","Semi Urban","Rural"))
-    Married = st.sidebar.selectbox('Marital Status',("Unmarried","Married")) 
-    Education = st.sidebar.selectbox('Education',("Graduate","Not A Graduate"))
 
-    # When 'Predict' is clicked, make the prediction and display the result
-    if st.sidebar.button("Predict"): 
-        result = prediction(ApplicantIncome, LoanAmount, Credit_History, Loan_Amount_Term, Property_Area,Married,Education) 
-        st.sidebar.success('Applicant is {}'.format(result))
-    
- 
-    # Display the first visualization using Plotly in the first viewport
-   
 
     df = loan_data.copy()
 
 
-    status_colors = alt.Scale(domain=['Awarded', 'Rejected'], range=['green', 'red'])
+    status_colors = alt.Scale(domain=['Awarded', 'Rejected'], range=['#59CE8F', '#FF1E00'])
     scatter_chart = alt.Chart(df).mark_circle(size=60).encode(
         x=alt.X('ApplicantIncome:Q', axis=alt.Axis(title='Applicant Income')),
         y=alt.Y('LoanAmount:Q', axis=alt.Axis(title='Loan Amount')),
@@ -119,15 +124,15 @@ def main():
 
 
 
-    stacked_bar_chart = alt.Chart(df).mark_bar().encode(
-        x=alt.X('Education:N', axis=alt.Axis(labelAngle=0, labelAlign='center')),
-        y=alt.Y('count()', axis=alt.Axis(title='Loan Count')),
-        color=alt.Color('Loan_Status', scale=alt.Scale(scheme='pastel2'),title="Loan Outcome"),
-        column=alt.Column('Gender:N', header=alt.Header(title='Gender', labelAlign='center')),
+    stacked_bar_chart_education = alt.Chart(df).mark_bar().encode(
+        x=alt.X('Education:N', axis=alt.Axis(title='',labelAngle=0, labelAlign='center',labelFontSize=chartAxisValuesFontSize)),
+        y=alt.Y('count()', axis=alt.Axis(title='Loan Count',labelFontSize=chartAxisValuesFontSize)),
+        color=alt.Color('Loan_Status', scale=status_colors,title="Loan Outcome"),
+        column=alt.Column('Gender:N', header=alt.Header(title='', labelAlign='center',labelFontSize=chartAxisValuesFontSize)),
         tooltip=['Gender', 'Education', 'Loan_Status', alt.Text('count()', format=',')]
     ).properties(
-        width=175,
-        height=450,
+        width=190,
+        height=300,
         title={
         "text": "Loan Status by Education and Gender",
         "align": "center",
@@ -135,6 +140,25 @@ def main():
     }
 
     )
+    
+    stacked_bar_chart_married = alt.Chart(df).mark_bar().encode(
+        x=alt.X('Married:N', axis=alt.Axis(title='',labelAngle=0, labelAlign='center',labelFontSize=chartAxisValuesFontSize)),
+        y=alt.Y('count()', axis=alt.Axis(title='Loan Count',labelFontSize=chartAxisValuesFontSize)),
+        color=alt.Color('Loan_Status', scale=status_colors,title="Loan Outcome"),
+        column=alt.Column('Gender:N', header=alt.Header(title='', labelAlign='center',labelFontSize=chartAxisValuesFontSize)),
+        tooltip=['Gender', 'Married', 'Loan_Status', alt.Text('count()', format=',')]
+    ).properties(
+        width=190,
+        height=300,
+        title={
+        "text": "Loan Status by Education and Gender",
+        "align": "center",
+        "anchor": "middle"
+    }
+
+    )
+    
+     
 
 
 
@@ -144,20 +168,20 @@ def main():
     df_bad = df[(df['Credit_History'] == 0) & (df['ApplicantIncome'] < 30000)]
 
 
-    # define the color scale for loan status
-    status_colors = alt.Scale(domain=['Awarded', 'Rejected'], range=['green', 'red'])
+
 
     # create scatter plot for applicants with good credit history
-    scatter_good = alt.Chart(df_good).mark_circle(size=60).encode(
+    scatter_good = alt.Chart(df_good).mark_circle(size=50).encode(
         x=alt.X('ApplicantIncome:Q', axis=alt.Axis(title='Applicant Income')),
         y=alt.Y('LoanAmount:Q', axis=alt.Axis(title='Loan Amount')),
         color=alt.Color('Loan_Status', scale=status_colors,title="Loan Outcome"),
         tooltip=['Loan_Status', 'ApplicantIncome', 'LoanAmount']
     ).properties(
-        width=450,
-        height=300,
+        width=580,
+        height=400,
         title=alt.TitleParams(text='Loan Amount vs. Applicant Income (Good Credit History)', align='center', anchor='middle', offset=20)
     )
+    
 
     # create scatter plot for applicants with bad credit history
     scatter_bad = alt.Chart(df_bad).mark_circle(size=60).encode(
@@ -166,36 +190,10 @@ def main():
         color=alt.Color('Loan_Status', scale=status_colors,title="Loan Outcome"),
         tooltip=['Loan_Status', 'ApplicantIncome', 'LoanAmount']
     ).properties(
-        width=450,
-        height=300,
+        width=580,
+        height=400,
         title=alt.TitleParams(text='Loan Amount vs. Applicant Income (Bad Credit History)', align='center', anchor='middle', offset=20)
-    )
-
-    # concatenate the two scatter plots vertically
-    scatter_combined = alt.vconcat(scatter_good, scatter_bad, spacing=20)
-
-    # display the combined scatter plots
-   
-       
-   
-
-    #left_column.markdown('Pie Chart of Loan_Status')
-    #left_column.altair_chart(loan_status_chart, use_container_width=True)
-    
-    #left_column.markdown('Pie Chart of Loan_Status')
-    #left_column.altair_chart(heatmap_chart, use_container_width=True)
-    
-    #right_column.markdown('Bar Chart of Loan_Amount_Term by Property_Area')
-    #right_column.altair_chart(loan_term_chart, use_container_width=True)
-
-    #left_column.markdown('Scatter Plot of LoanAmount vs. ApplicantIncome')
-    #left_column.altair_chart(scatter_chart, use_container_width=True)
-
-    #right_column.markdown('Stacked Bar Chart of Loan_Status by Education and Gender')
-    #right_column.altair_chart(stacked_bar_chart, use_container_width=True)
-    
-    # Layout (Content)
-    
+    ).configure_view(stroke='red')
 
 
     st.write(
@@ -203,13 +201,42 @@ def main():
         unsafe_allow_html=True
     )
     st.markdown("<br>", unsafe_allow_html=True)
+    listTabs = ['Insight 💡','Predict 🤖']
+    #tab1, tab2 = st.tabs(["Insight", "Predict"])
+    whitespace = 40
+    ## Fills and centers each tab label with em-spaces
+    tab1,tab2 = st.tabs([s.center(whitespace,"\u2001") for s in listTabs])
     
-    left_column, m,right_column = st.columns([100,10,100])
-    left_column.altair_chart( scatter_good, use_container_width=True)
-    left_column.altair_chart( scatter_bad, use_container_width=True)
-    right_column.altair_chart(stacked_bar_chart, use_container_width=False)
+    with tab1:
+        m1,left_column, m,right_column = st.columns([20,100,10,100])
+        left_column.altair_chart( stacked_bar_chart_education,use_container_width=False)
+        
+        left_column.altair_chart( scatter_good, use_container_width=False)
+        right_column.altair_chart(stacked_bar_chart_married, use_container_width=False)
+        right_column.altair_chart(scatter_bad, use_container_width=False)
+    with tab2:
+        
+        col0,col1,col2,col3,col4 = st.columns([20,100,100,100,20]);
+        with col1:
+            ApplicantIncome = st.number_input("Applicant Monthly Income ($)",min_value=1000, max_value=1000000, step=100)
+            LoanAmount = st.number_input("Total loan amount ($)",min_value=1000, max_value=1000000, step=100)
+            Education = st.selectbox('Education',("Graduate","Not A Graduate"))
+        with col2:
+            Credit_History = st.selectbox('Credit History',("Uncleared Debts","No Uncleared Debts"))
+            Loan_Amount_Term = st.selectbox('Loan Term Months',("480","360","300","240","180","120","84","60","36","12"))
+        with col3:
+            Property_Area = st.selectbox('Property Area',("Urban","Semi Urban","Rural"))
+            Married = st.selectbox('Marital Status',("Unmarried","Married")) 
+           
 
+            # When 'Predict' is clicked, make the prediction and display the result
+            if st.button("Predict"): 
+                result = prediction(ApplicantIncome, LoanAmount, Credit_History, Loan_Amount_Term, Property_Area,Married,Education) 
+                st.success('Applicant is {}'.format(result))
     
+ 
+    # Display the first visualization using Plotly in the first viewport
+           
 
 
 # Run the Streamlit app
