@@ -202,8 +202,8 @@ def main():
         right_column.altair_chart(stacked_bar_chart_married, use_container_width=False)
         right_column.altair_chart(alt.Chart(df_bad).mark_rule().encode()) 
         right_column.altair_chart(scatter_bad, use_container_width=False)
-    with tab2:
         
+    with tab2:
         col0,col1,col2,col3,col4 = st.columns([20,100,100,100,20]);
         with col1:
             ApplicantIncome = st.number_input("Applicant Monthly Income ($)",min_value=100, max_value=1000000, step=50)
