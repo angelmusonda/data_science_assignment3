@@ -5,6 +5,9 @@ import streamlit as st
 with open('classifier_model.pkl', 'rb') as f:
     loaded_model = pickle.load(f)
 
+# Load the scaler object
+with open('scaler.pkl', 'rb') as g:
+    scaler = pickle.load(g)
 
 @st.cache_data()
   
@@ -40,10 +43,19 @@ def prediction(ApplicantIncome, LoanAmount, Credit_History, Loan_Amount_Term, Pr
         Education = 0 
  
 
+    # Transformations
+    input1 = {'ApplicantIncome':ApplicantIncome,
+        'LoanAmount':LoanAmount,
+        'Credit_History':Credit_History,
+        'Loan_Amount_Term':Loan_Amount_Term,
+        'Property_Area':Property_Area,
+        'Married':Married,
+        'Education':Education}
+    input_df = pd.DataFrame(input1,index = [0])
+    input_df[['ApplicantIncome','LoanAmount']] = scaler.transform(input_df[['ApplicantIncome','LoanAmount']])
  
     # Making predictions 
-    prediction = loaded_model.predict( 
-        [[ApplicantIncome, LoanAmount, Credit_History, Loan_Amount_Term, Property_Area,Married,Education]])
+    prediction = loaded_model.predict(input_df) 
      
     if prediction == 0:
         pred = 'Not Eligible'
@@ -170,9 +182,11 @@ def main():
 
     # Writting the title of dashboard
     st.write(
-        '<h1 style="text-align: center; padding-top: 18px;color: #115f9a">Dream Housing Finance Loans</h1>',
+        '<h1 style="text-align: center; padding-top: 20px;color: #115f9a">Dream Housing Finance Loans</h1>',
         unsafe_allow_html=True
     )
+    
+
 
     tab1, tab2 = st.tabs(["Loan Applications Records", "Make Predictions Here"])
   
@@ -192,8 +206,8 @@ def main():
         
         col0,col1,col2,col3,col4 = st.columns([20,100,100,100,20]);
         with col1:
-            ApplicantIncome = st.number_input("Applicant Monthly Income ($)",min_value=1000, max_value=1000000, step=100)
-            LoanAmount = st.number_input("Total loan amount ($)",min_value=1000, max_value=1000000, step=100)
+            ApplicantIncome = st.number_input("Applicant Monthly Income ($)",min_value=100, max_value=1000000, step=50)
+            LoanAmount = st.number_input("Total loan amount ($)",min_value=100, max_value=1000000, step=50)
             Education = st.selectbox('Education',("Graduate","Not A Graduate"))
         with col2:
             Credit_History = st.selectbox('Credit History',("Uncleared Debts","No Uncleared Debts"))
