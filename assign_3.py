@@ -1,5 +1,8 @@
 import pickle
 import streamlit as st
+import streamlit as st
+import pandas as pd
+import altair as alt
 
 # Load the saved model from file
 with open('classifier_model.pkl', 'rb') as f:
@@ -65,11 +68,7 @@ def prediction(ApplicantIncome, LoanAmount, Credit_History, Loan_Amount_Term, Pr
     
 # Main function in which we define our webpage  
 # Import necessary libraries
-import streamlit as st
-import pandas as pd
-import plotly.express as px
-import matplotlib.pyplot as plt
-import altair as alt
+
 
 
 # Define the Streamlit app
