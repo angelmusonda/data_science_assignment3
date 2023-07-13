@@ -1,6 +1,5 @@
 import pickle
 import streamlit as st
-import streamlit as st
 import pandas as pd
 import altair as alt
 
@@ -68,8 +67,6 @@ def prediction(ApplicantIncome, LoanAmount, Credit_History, Loan_Amount_Term, Pr
     
 # Main function in which we define our webpage  
 # Import necessary libraries
-
-
 
 # Define the Streamlit app
 def main():  
