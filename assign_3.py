@@ -183,10 +183,8 @@ def main():
     )
     
 
-
     tab1, tab2 = st.tabs(["Loan Applications Records", "Make Predictions Here"])
-  
-    
+   
     with tab1:
         m1,left_column, m,right_column = st.columns([20,100,10,100])
         left_column.altair_chart(alt.Chart(df_bad).mark_rule().encode()) 
